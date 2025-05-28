@@ -11,6 +11,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -109,6 +110,7 @@ public class Person {
     }
 
     // Simply appends the basic info into the text file for a new person
+    // there is an overload method for adding demerit point
     private void saveToTextFile(String filename) {
         try {
             FileWriter fw = new FileWriter(filename, true);
@@ -250,35 +252,43 @@ public class Person {
     public String addDemeritPoints(int inPoints)
     {
         Date currDate = new Date();
+        String currDateStr = dateToString(currDate);
 
         if (this.demeritPoints == null)
         {
             this.demeritPoints = new HashMap<>();
         }
 
-        // condition 1
-        String currDateStr = dateToString(currDate);
+        // condition 1 N/A for this method
+        // see overload method
 
         // condition 2
         if (inPoints < 1 || inPoints > 6)
         {
             System.out.println("Input demerit points must be between 1 to 6\tFailed");
+            saveToTextFile(person_file, "demerit", "Failed");
             return "Failed";
         }
+        else
+        {
+            System.out.println("Input demerit points is valid");
+        }
 
-        demeritPoints.put(currDate, inPoints);
+        this.demeritPoints.put(currDate, inPoints);
 
         // condition 3
         if (calculateAge(currDateStr) >= 21 && demeritWithinTwoYears(currDateStr) > 12)
         {
             isSuspended = true;
             System.out.println("Person is suspended\tSuccess");
+            saveToTextFile(person_file, "demerit", "Success");
             return "Success";
         }
         else if (calculateAge(currDateStr) < 21 && demeritWithinTwoYears(currDateStr) > 6)
         {
             isSuspended = true;
             System.out.println("Person is suspended\tSuccess");
+            saveToTextFile(person_file, "demerit", "Success");
             return "Success";
         }
         else
@@ -288,7 +298,77 @@ public class Person {
         }
     }
 
+    // overloads addDemeritPoints, accepts offense date as an argument
+    public String addDemeritPoints(int inPoints, String inDateStr)
+    {
+        Date currDate = stringToDate(inDateStr);
+        String currDateStr = dateToString(currDate);
 
+        if (this.demeritPoints == null)
+        {
+            this.demeritPoints = new HashMap<>();
+        }
+
+        // condition 1
+        if (!isValidOffenseDate(inDateStr))
+        {
+            System.out.println("Input offense date is not in dd-mm-yyyy\tFailed");
+            saveToTextFile(person_file, "demerit", "Failed");
+            return "Failed";
+        }
+
+        // condition 2
+        if (inPoints < 1 || inPoints > 6)
+        {
+            System.out.println("Input demerit points must be between 1 to 6\tFailed");
+            saveToTextFile(person_file, "demerit", "Failed");
+            return "Failed";
+        }
+        else
+        {
+            System.out.println("Input demerit points is valid");
+        }
+
+        this.demeritPoints.put(currDate, inPoints);
+
+        // condition 3
+        if (calculateAge(currDateStr) >= 21 && demeritWithinTwoYears(currDateStr) > 12)
+        {
+            isSuspended = true;
+            System.out.println("Person is suspended\tSuccess");
+            saveToTextFile(person_file, "demerit", "Success");
+            return "Success";
+        }
+        else if (calculateAge(currDateStr) < 21 && demeritWithinTwoYears(currDateStr) > 6)
+        {
+            isSuspended = true;
+            System.out.println("Person is suspended\tSuccess");
+            saveToTextFile(person_file, "demerit", "Success");
+            return "Success";
+        }
+        else
+        {
+            System.out.println("Person is not suspended\tFailed");
+            saveToTextFile(person_file, "demerit", "Failed");
+            return "Failed";
+        }
+    }
+
+    // checks if input offense date is in valid format
+    private boolean isValidOffenseDate(String inDateStr)
+    {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        try 
+        {
+            LocalDate parsedDate = LocalDate.parse(inDateStr, formatter);
+            return true;
+        }
+        catch (DateTimeParseException e)
+        {
+            return false;
+        }
+    }
 
     // converts birthdate and current date to calculate the person's age
     private int calculateAge(String inDate)
@@ -308,20 +388,6 @@ public class Person {
     {
         int totalPoints = 0;
 
-        // test data
-        /*
-        LocalDate testLocal = LocalDate.of(2024, 3, 10);
-        Date test = Date.from(testLocal.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        demeritPoints.put(test, 10);
-        
-        LocalDate testLocal2 = LocalDate.of(2018, 1, 2);
-        Date test2 = Date.from(testLocal2.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        demeritPoints.put(test2, 4);
-
-        LocalDate testLocal3 = LocalDate.of(2024, 2, 4);
-        Date test3 = Date.from(testLocal3.atStartOfDay(ZoneId.systemDefault()).toInstant());
-        demeritPoints.put(test3, 2);
-        */
         LocalDate curr = stringToLocalDate(inDate);
         LocalDate twoYearsAgo = curr.minus(Period.ofYears(2));
         
@@ -336,6 +402,42 @@ public class Person {
             }
         }
         return totalPoints;
+    }
+
+    // overloads saveToTextFile, accepts mode (demerit) and status as arguments
+    private void saveToTextFile(String filename, String mode, String status)
+    {
+        if (mode == "demerit")
+        {
+            try 
+            {
+                FileWriter fw = new FileWriter(filename, true);
+                fw.write("\n"+ personID + "," + firstName + " " + lastName + "'s," +
+                    "Demerit Points:\n");
+
+                    for (HashMap.Entry<Date, Integer> entry : demeritPoints.entrySet())
+                    {
+                        String dateStr = dateToString(entry.getKey());
+                        fw.write(dateStr + "," + entry.getValue() + "\n");
+                    }
+                    
+                    fw.write(status + "\n");
+
+                fw.close();
+            }
+            catch (IOException e)
+            {
+                System.out.println("Error writing to file...\n" + e.getMessage());
+            }
+        }
+    }
+
+    // converts String to Date
+    private Date stringToDate(String inDateStr)
+    {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        LocalDate formattedDate = LocalDate.parse(inDateStr, formatter);
+        return Date.from(formattedDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
     }
 
     // converts and formats Date to String
@@ -401,5 +503,28 @@ public class Person {
 
     public boolean getIsSuspended() {
         return isSuspended;
+    }
+
+    // setters for demerit point
+    public void setDemeritPoint(Integer inPoints)
+    {
+        if (this.demeritPoints == null)
+        {
+            this.demeritPoints = new HashMap<>();
+        }
+
+        Date date = new Date();
+        this.demeritPoints.put(date, inPoints);
+    }
+
+    public void setDemeritPoint(Integer inPoints, String inDateStr)
+    {
+        if (this.demeritPoints == null)
+        {
+            this.demeritPoints = new HashMap<>();
+        }
+
+        Date date = stringToDate(inDateStr);
+        this.demeritPoints.put(date, inPoints);
     }
 }

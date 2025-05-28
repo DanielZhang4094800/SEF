@@ -42,6 +42,7 @@ public class Main {
         daveLincoln.addPerson();
 
         // Test date
-        johnSmith.addDemeritPoints(5);
+        johnSmith.setDemeritPoint(10, "22-01-2024");
+        johnSmith.addDemeritPoints(6, "22-03-2025");
     }
 }

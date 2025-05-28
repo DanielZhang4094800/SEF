@@ -1,0 +1,50 @@
+package au.edu.rmit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.Test;
+
+public class testAddDemeritPoints
+{
+    // this test is for offense date input validation
+    @Test
+    public void testisValidOffenseDate()
+    {
+        Person person = new Person();
+        boolean result;
+        
+        // valid offense date
+        result = person.isValidOffenseDate("12-04-2024");
+        assertEquals(true, result);
+
+        // invalid offense date (day out of range)
+        result = person.isValidOffenseDate("34-02-2020");
+        assertEquals(false, result);
+
+        // invalid offense date (date in future)
+        result = person.isValidOffenseDate("19-08-2049");
+        assertEquals(false, result);
+
+        // invalid offense date (not in dd-mm-yyyy)
+        result = person.isValidOffenseDate("04-2004-28");
+        assertEquals(false, result);
+
+        // invalid offense date (missing digits)
+        result = person.isValidOffenseDate("1-4-2000");
+        assertEquals(false, result);
+    }
+
+    // this test is for sum of demerit points in last two year
+    @Test
+    public void testDemeritWithinTwoYears()
+    {
+        Person person = new Person();
+        int result;
+
+        // valid sum
+        person.setDemeritPoint(3, "11-06-2024");
+        person.setDemeritPoint(4, "09-11-2023");
+        result = person.demeritWithinTwoYears("10-03-2025");
+        assertEquals(7, result)
+    }
+}

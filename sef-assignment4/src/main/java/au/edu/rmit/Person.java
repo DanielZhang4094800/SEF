@@ -355,13 +355,20 @@ public class Person {
     }
 
     // checks if input offense date is in valid format
-    private boolean isValidOffenseDate(String inDateStr)
+    public boolean isValidOffenseDate(String inDateStr)
     {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         try 
         {
             LocalDate parsedDate = LocalDate.parse(inDateStr, formatter);
+
+            if (parsedDate.isAfter(LocalDate.now()))
+            {
+                System.out.println("This date is in the future");
+                return false;
+            }
+
             return true;
         }
         catch (DateTimeParseException e)
@@ -384,7 +391,7 @@ public class Person {
     }
 
     // calculates and return sum of demerit point within last 2 years
-    private int demeritWithinTwoYears(String inDate)
+    public int demeritWithinTwoYears(String inDate)
     {
         int totalPoints = 0;
 

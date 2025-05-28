@@ -1,16 +1,20 @@
 package au.edu.rmit;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 
 public class Person {
     
@@ -240,10 +244,112 @@ public class Person {
             && (secondNumber <= 9 && secondNumber >= 2);
     }
 
-    // === === === === === === === === === === === === === === ===
-    public String addDemeritPoints()
+    // === Demerit Point Functions ===
+    // this default method doesn't need date inputs and uses current date
+    // there is an overload method for when specific date is desired
+    public String addDemeritPoints(int inPoints)
     {
-        return "Success";
+        Date currDate = new Date();
+
+        if (this.demeritPoints == null)
+        {
+            this.demeritPoints = new HashMap<>();
+        }
+
+        // condition 1
+        String currDateStr = dateToString(currDate);
+
+        // condition 2
+        if (inPoints < 1 || inPoints > 6)
+        {
+            System.out.println("Input demerit points must be between 1 to 6\tFailed");
+            return "Failed";
+        }
+
+        demeritPoints.put(currDate, inPoints);
+
+        // condition 3
+        if (calculateAge(currDateStr) >= 21 && demeritWithinTwoYears(currDateStr) > 12)
+        {
+            isSuspended = true;
+            System.out.println("Person is suspended\tSuccess");
+            return "Success";
+        }
+        else if (calculateAge(currDateStr) < 21 && demeritWithinTwoYears(currDateStr) > 6)
+        {
+            isSuspended = true;
+            System.out.println("Person is suspended\tSuccess");
+            return "Success";
+        }
+        else
+        {
+            System.out.println("Person is not suspended\tFailed");
+            return "Failed";
+        }
+    }
+
+
+
+    // converts birthdate and current date to calculate the person's age
+    private int calculateAge(String inDate)
+    {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        
+        LocalDate curr = LocalDate.parse(inDate, formatter);
+        LocalDate birth = LocalDate.parse(this.birthdate, formatter);
+
+        int age = Period.between(birth, curr).getYears();
+
+        return age;
+    }
+
+    // calculates and return sum of demerit point within last 2 years
+    private int demeritWithinTwoYears(String inDate)
+    {
+        int totalPoints = 0;
+
+        // test data
+        /*
+        LocalDate testLocal = LocalDate.of(2024, 3, 10);
+        Date test = Date.from(testLocal.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        demeritPoints.put(test, 10);
+        
+        LocalDate testLocal2 = LocalDate.of(2018, 1, 2);
+        Date test2 = Date.from(testLocal2.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        demeritPoints.put(test2, 4);
+
+        LocalDate testLocal3 = LocalDate.of(2024, 2, 4);
+        Date test3 = Date.from(testLocal3.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        demeritPoints.put(test3, 2);
+        */
+        LocalDate curr = stringToLocalDate(inDate);
+        LocalDate twoYearsAgo = curr.minus(Period.ofYears(2));
+        
+        for (HashMap.Entry<Date, Integer> entry : demeritPoints.entrySet())
+        {
+            String dateStr = dateToString(entry.getKey());
+            LocalDate date = stringToLocalDate(dateStr);
+            
+            if (!date.isBefore(twoYearsAgo))
+            {
+                totalPoints += entry.getValue();
+            }
+        }
+        return totalPoints;
+    }
+
+    // converts and formats Date to String
+    private String dateToString(Date inDate)
+    {
+        SimpleDateFormat SDF = new SimpleDateFormat("dd-MM-yyyy");
+        return SDF.format(inDate);
+    }
+
+    // converts and formats String to LocalDate
+    private LocalDate stringToLocalDate(String inDateStr)
+    {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        return LocalDate.parse(inDateStr, formatter);
     }
 
     // === SETTERS AND GETTERS ===
